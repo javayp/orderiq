@@ -1,6 +1,13 @@
 spring:
   application:
     name: orderiq
+  sql:
+    init:
+      mode: always
+
+orderiq:
+  database:
+    path: ${ORDERIQ_DB_PATH:./data/orders.db}
 
 server:
   port: ${SERVER_PORT:8000}
