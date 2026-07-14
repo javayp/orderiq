@@ -1,0 +1,4 @@
+rootProject.name = 'orderiq'
+
+include 'order-data'
+include 'order-ai'
