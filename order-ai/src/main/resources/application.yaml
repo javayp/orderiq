@@ -1,6 +1,8 @@
 spring:
   application:
     name: orderiq
+  config:
+    import: classpath:order-vocabulary.yaml
   sql:
     init:
       mode: always

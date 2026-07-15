@@ -28,7 +28,7 @@ class OrderDataConfigurationTest {
 
 		new ApplicationContextRunner()
 				.withUserConfiguration(OrderDataConfiguration.class)
-				.withPropertyValues("ORDERIQ_DB_PATH=" + configuredPath)
+				.withPropertyValues("ORDERIQ_DB_PATH=%s".formatted(configuredPath))
 				.withBean(OrderStore.class, () -> orders -> { })
 				.withBean(OrderQueryRepository.class, EmptyOrderQueryRepository::new)
 				.run(context -> {
@@ -36,7 +36,7 @@ class OrderDataConfigurationTest {
 					SQLiteDataSource dataSource = context.getBean(SQLiteDataSource.class);
 					try (var connection = dataSource.getConnection()) {
 						assertThat(connection.getMetaData().getURL())
-								.isEqualTo("jdbc:sqlite:" + configuredPath);
+								.isEqualTo("jdbc:sqlite:%s".formatted(configuredPath));
 					}
 				});
 	}

@@ -24,8 +24,9 @@ public final class OrderIngestionCli implements ApplicationRunner {
 			throw new IllegalArgumentException("Usage: load <csv-file> [<csv-file> ...]");
 		}
 		if (!"load".equalsIgnoreCase(command.getFirst())) {
-			throw new IllegalArgumentException("Unknown command '" + command.getFirst()
-					+ "'. Supported command: load <csv-file> [<csv-file> ...]");
+			throw new IllegalArgumentException(
+					"Unknown command '%s'. Supported command: load <csv-file> [<csv-file> ...]"
+							.formatted(command.getFirst()));
 		}
 		if (command.size() < 2) {
 			throw new IllegalArgumentException("Usage: load <csv-file> [<csv-file> ...]");

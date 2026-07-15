@@ -16,6 +16,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -70,8 +71,8 @@ class OrderApiIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.total_revenue").value(42.00))
 				.andExpect(jsonPath("$.avg_order_value").value(10.50))
-				.andExpect(jsonPath("$.orders_per_day['" + today.minusDays(1) + "']").value(1))
-				.andExpect(jsonPath("$.orders_per_day['" + today + "']").value(1));
+				.andExpect(jsonPath("$.orders_per_day['%s']".formatted(today.minusDays(1))).value(1))
+				.andExpect(jsonPath("$.orders_per_day['%s']".formatted(today)).value(1));
 	}
 
 	@Test
@@ -97,6 +98,30 @@ class OrderApiIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(content().contentTypeCompatibleWith("text/plain"))
 				.andExpect(content().string("ok"));
+	}
+
+	@Test
+	void acceptsAnOrderQuestionForTheLlmPipeline() throws Exception {
+		mockMvc.perform(post("/orders/ask")
+					.contentType("application/json")
+					.content("""
+							{"question":"Give me order statistics"}
+							"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.answer").value("Question accepted for LLM processing."))
+				.andExpect(jsonPath("$.rows.length()").value(0));
+	}
+
+	@Test
+	void rejectsAnOutOfDomainQuestionBeforeTheLlmPipeline() throws Exception {
+		mockMvc.perform(post("/orders/ask")
+					.contentType("application/json")
+					.content("""
+							{"question":"Who are you?"}
+							"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Order question rejected"))
+				.andExpect(jsonPath("$.decision").value("OUT_OF_DOMAIN"));
 	}
 
 	private void insert(String orderId, String customerId, LocalDate orderDate, String amountUsd) {

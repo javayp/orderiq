@@ -50,7 +50,7 @@ public final class DefaultOrderQueryService implements OrderQueryService {
 		String normalized = customerId.trim();
 		if (normalized.length() > MAX_CUSTOMER_ID_LENGTH) {
 			throw new InvalidOrderQueryException(
-					"customer_id must not exceed " + MAX_CUSTOMER_ID_LENGTH + " characters");
+					"customer_id must not exceed %d characters".formatted(MAX_CUSTOMER_ID_LENGTH));
 		}
 		return normalized;
 	}

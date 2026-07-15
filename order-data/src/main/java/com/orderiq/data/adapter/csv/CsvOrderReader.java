@@ -32,7 +32,8 @@ public final class CsvOrderReader implements OrderSource {
 	@Override
 	public List<RawOrderRow> read(Path source) {
 		if (!Files.isRegularFile(source)) {
-			throw new IngestionException("CSV file does not exist or is not a regular file: " + source);
+			throw new IngestionException(
+					"CSV file does not exist or is not a regular file: %s".formatted(source));
 		}
 		try (Reader reader = Files.newBufferedReader(source, StandardCharsets.UTF_8);
 			 CSVParser parser = CSV_FORMAT.parse(reader)) {
@@ -41,7 +42,9 @@ public final class CsvOrderReader implements OrderSource {
 					.map(CsvOrderReader::toRawOrderRow)
 					.toList();
 		} catch (IOException | IllegalArgumentException exception) {
-			throw new IngestionException("Unable to read CSV file " + source + ": " + exception.getMessage(), exception);
+			throw new IngestionException(
+					"Unable to read CSV file %s: %s".formatted(source, exception.getMessage()),
+					exception);
 		}
 	}
 
@@ -59,7 +62,8 @@ public final class CsvOrderReader implements OrderSource {
 		if (!headers.keySet().containsAll(REQUIRED_HEADERS)) {
 			Set<String> missing = new java.util.TreeSet<>(REQUIRED_HEADERS);
 			missing.removeAll(headers.keySet());
-			throw new IngestionException("CSV file " + source + " is missing required headers: " + missing);
+			throw new IngestionException(
+					"CSV file %s is missing required headers: %s".formatted(source, missing));
 		}
 	}
 }

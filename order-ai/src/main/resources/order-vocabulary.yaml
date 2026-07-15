@@ -1,0 +1,379 @@
+orderiq:
+  ai:
+    guardrail:
+      vocabulary:
+        metrics:
+          AVERAGE_ORDER_VALUE:
+            - average order value
+            - average order amount
+            - average purchase value
+            - average transaction value
+            - avg order value
+            - avg order amount
+            - averge order value
+            - average amount
+            - mean order value
+            - mean amount
+            - aov
+            - statistics
+            - statitics
+            - stats
+            - summary
+            - overview
+          ORDER_COUNT:
+            - how many orders
+            - number of orders
+            - count of orders
+            - order count
+            - count orders
+            - transaction count
+            - purchase count
+            - order volume
+            - statistics
+            - statitics
+            - stats
+            - summary
+            - overview
+          TOTAL_REVENUE:
+            - total revenue
+            - total sales
+            - sales total
+            - gross sales
+            - total amount
+            - sum of amounts
+            - sum of orders
+            - customer spend
+            - customer spending
+            - spent the most
+            - turnover
+            - revenue
+            - reveune
+            - revnue
+            - total revnue
+            - sales
+            - statistics
+            - statitics
+            - stats
+            - summary
+            - overview
+          ORDER_LIST:
+            - show all orders
+            - show orders
+            - list all orders
+            - list orders
+            - find orders
+            - give me orders
+            - which orders
+            - all orders
+            - order history
+            - purchase history
+            - transactions
+            - purchases
+            - oders
+            - ordres
+            - orderz
+            - fetch cmem start
+
+        groupings:
+          DAY:
+            - orders per day
+            - revenue per day
+            - sales per day
+            - each day
+            - per day
+            - by day
+            - daily
+          MONTH:
+            - orders per month
+            - revenue per month
+            - sales per month
+            - each month
+            - per month
+            - by month
+            - monthly
+          YEAR:
+            - orders per year
+            - revenue per year
+            - sales per year
+            - each year
+            - per year
+            - by year
+            - yearly
+            - annual
+          CUSTOMER:
+            - orders per customer
+            - revenue per customer
+            - sales per customer
+            - each customer
+            - per customer
+            - by customer
+            - top customers
+            - best customer
+
+        sorting:
+          ORDER_DATE_DESC:
+            - most recent
+            - latest
+            - newest
+            - recent
+          ORDER_DATE_ASC:
+            - oldest
+            - earliest
+          AMOUNT_DESC:
+            - spent the most
+            - highest revenue
+            - highest order value
+            - highest value
+            - highest one
+            - high value
+            - largest order
+            - largest purchase
+            - biggest order
+            - biggest orders
+            - biggest purchase
+            - biggest purchases
+            - most expensive
+            - top orders
+            - top customers
+            - best customer
+          AMOUNT_ASC:
+            - lowest revenue
+            - lowest value
+            - low value
+            - smallest order
+            - smallest purchase
+            - cheapest
+            - least expensive
+
+        unsupported:
+          product:
+            - product categories
+            - product category
+            - products
+            - product
+            - items
+            - item
+            - sku
+          shipping:
+            - shipping status
+            - delivery status
+            - shipment
+            - shipping
+            - delivery
+          location:
+            - customer address
+            - billing address
+            - shipping address
+            - region
+            - country
+            - city
+            - location
+          payment:
+            - payment method
+            - payment status
+            - credit card
+          customer-profile:
+            - customer name
+            - email address
+            - phone number
+            - email
+            - phone
+            - gender
+            - age
+          order-status:
+            - cancelled orders
+            - canceled orders
+            - order status
+            - returns
+            - returned
+            - refunds
+            - refund
+          price-components:
+            - discounts
+            - discount
+            - taxes
+            - tax
+          organization:
+            - sales representative
+            - salesperson
+            - employee
+            - branch
+            - store
+          original-currency:
+            - original currency
+            - currency breakdown
+            - by currency
+            - paid in euros
+            - paid in eur
+
+        anchors:
+          - average order value
+          - order value
+          - customer spending
+          - customer spend
+          - order
+          - orders
+          - purchase
+          - purchases
+          - transaction
+          - transactions
+          - customer
+          - customers
+          - client
+          - clients
+          - buyer
+          - buyers
+          - revenue
+          - sales
+          - amount
+          - amounts
+          - spend
+          - spending
+          - turnover
+          - aov
+
+        context-hints:
+          - show
+          - list
+          - find
+          - give me
+          - fetch
+          - get
+          - display
+          - calculate
+          - count
+          - compare
+          - summarize
+          - today
+          - yesterday
+          - last
+          - past
+          - previous
+          - since
+          - before
+          - after
+          - between
+          - during
+          - in
+          - for
+          - over
+          - under
+          - above
+          - below
+          - at least
+          - at most
+
+        customer-grouping-hints:
+          - which customer
+          - which customers
+          - customers
+
+        customer-id-labels:
+          - customer
+          - client
+          - buyer
+
+        order-id-labels:
+          - order
+
+        blocked-content:
+          - fuck you
+          - fuck off
+          - shut up
+          - idiot
+          - stupid
+          - moron
+          - what the hell
+
+        security-indicators:
+          - ignore previous instructions
+          - ignore all instructions
+          - ignore prior directions
+          - ignore all prior directions
+          - reveal system prompt
+          - reveal the system prompt
+          - show system prompt
+          - hidden prompt
+          - developer message
+          - developer instructions
+          - bypass your rules
+          - bypass the rules
+          - database administrator
+          - expose all data
+          - select * from
+          - delete all orders
+          - drop table
+          - alter table
+          - delete from
+          - insert into
+          - update orders
+          - union select
+          - pragma
+          - attach database
+
+        multiple-question-markers:
+          - and who
+          - and what
+          - and when
+          - and where
+          - and why
+          - and how
+          - then show
+          - then list
+          - then tell
+          - also show
+          - also list
+          - and tell
+          - or tell
+          - and weather
+          - or weather
+          - and book
+          - or book
+          - and explain
+          - or explain
+          - and write
+          - or write
+          - . who
+          - . what
+          - . how
+          - . show
+          - . list
+          - . tell
+          - . explain
+          - . write
+
+        continuation-markers:
+          - and
+          - or
+          - only
+          - for
+          - with
+          - filtered by
+          - limited to
+          - focus on
+          - concentrate on
+
+        incomplete-suffixes:
+          - last
+          - past
+          - previous
+          - at least
+          - at most
+          - more than
+          - less than
+          - over
+          - under
+          - above
+          - below
+          - between
+          - after
+          - before
+          - since
+          - for customer
+          - for customers
+          - for client
+          - for clients
+          - for buyer
+          - for buyers
+          - customer id
+          - order id

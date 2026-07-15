@@ -20,7 +20,7 @@ public record Order(
 
 	private static String requireText(String value, String field) {
 		if (value == null || value.isBlank()) {
-			throw new IllegalArgumentException(field + " must not be blank");
+			throw new IllegalArgumentException("%s must not be blank".formatted(field));
 		}
 		return value;
 	}

@@ -1,16 +1,16 @@
 # OrderIQ
 
 OrderIQ is a Java 21/Spring Boot implementation of the customer-order ETL and
-AI-augmented query exercise. It is one deployable microservice with two internal
-Gradle modules so that data concerns and AI concerns can evolve independently
-without introducing a network boundary inside this exercise.
+AI-augmented query exercise. It has one long-running microservice and one
+one-shot ETL application, separated into Gradle modules without introducing an
+internal HTTP boundary.
 
 ## Current status
 
 | Exercise area | Status |
 | --- | --- |
 | Part 1 — CSV ETL and SQLite load | Implemented and tested |
-| Part 2 — REST query API | Next increment |
+| Part 2 — REST query API | Implemented and tested |
 | Part 3 — Docker and Kubernetes | Planned, not implemented |
 | Part 4 — NL query, semantic search, scaling write-up | Planned, not implemented |
 
@@ -18,15 +18,21 @@ without introducing a network boundary inside this exercise.
 
 ```text
 orderiq/
-├── order-data/   # Order domain, CSV normalization, ETL orchestration, SQLite
-├── order-ai/     # Spring Boot executable boundary; API and AI components go here
+├── order-data/   # Runnable ETL plus models, services, ports and adapters
+├── order-ai/     # Long-running REST/AI service
 ├── data/         # Supplied CSV input; generated SQLite files are ignored
 └── docs/         # Architecture by responsibility
 ```
 
-`order-ai` depends on `order-data` through Java interfaces. There is no internal
-HTTP call and no second runtime service. The output remains one executable JAR
-and, later, one container image.
+`order-ai` depends on the normal `order-data` library JAR through Java
+interfaces. `order-data` also produces its own executable JAR for the finite
+load job. There is no internal HTTP call: the ETL runs, replaces the dataset,
+and exits; `order-ai` is the only long-running service.
+
+Within `order-data`, immutable models, service contracts, `service.impl`
+classes, business policies, ports, and CSV/SQLite adapters have distinct
+packages. This keeps the code segregated by responsibility while preserving a
+single long-running microservice.
 
 ## Run the implemented ETL
 
@@ -34,20 +40,20 @@ Prerequisite: Java 21. The Gradle wrapper is included.
 
 ```shell
 ./gradlew test
-./gradlew :order-ai:bootRun --args='load data/orders.csv'
+./gradlew :order-data:bootRun --args='load data/orders.csv'
 ```
 
 To choose another SQLite location:
 
 ```shell
 ORDERIQ_DB_PATH=/absolute/path/orders.db \
-  ./gradlew :order-ai:bootRun --args='load data/orders.csv'
+  ./gradlew :order-data:bootRun --args='load data/orders.csv'
 ```
 
 The loader accepts multiple files and replaces the previous dataset atomically:
 
 ```shell
-./gradlew :order-ai:bootRun --args='load data/orders-a.csv data/orders-b.csv'
+./gradlew :order-data:bootRun --args='load data/orders-a.csv data/orders-b.csv'
 ```
 
 ## ETL behavior
@@ -80,9 +86,32 @@ total USD revenue:     2337365.30
 ## Architecture documentation
 
 - [Data module](docs/data-module.md)
+- [SOLID design and responsibility map](docs/solid-design.md)
 - [AI module](docs/ai-module.md)
 - [Infrastructure and enterprise scaling](docs/infrastructure.md)
 
 These documents distinguish the exercise implementation from the future
 50-customer architecture. SQLite is appropriate for the submission scope; it
 is not presented as the multi-region production database.
+
+## Run the query API
+
+Load the data once, then start the service:
+
+```shell
+./gradlew :order-data:bootRun --args='load data/orders.csv'
+./gradlew :order-ai:bootRun
+```
+
+The API listens on port 8000 by default and exposes:
+
+```text
+GET /orders/customer/{customer_id}
+GET /orders/stats
+GET /orders/recent?days=N
+GET /healthz
+```
+
+JSON fields use snake case. `/orders/stats` returns `total_revenue`,
+`avg_order_value`, and `orders_per_day` as required. A recent window is inclusive
+and ends on the current UTC date; future-dated records are not treated as recent.

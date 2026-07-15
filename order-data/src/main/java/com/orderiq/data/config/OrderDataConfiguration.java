@@ -95,7 +95,7 @@ public class OrderDataConfiguration {
 		sqliteConfig.enforceForeignKeys(true);
 
 		SQLiteDataSource dataSource = new SQLiteDataSource(sqliteConfig);
-		dataSource.setUrl("jdbc:sqlite:" + databasePath);
+		dataSource.setUrl("jdbc:sqlite:%s".formatted(databasePath));
 		return dataSource;
 	}
 
@@ -107,7 +107,8 @@ public class OrderDataConfiguration {
 		try {
 			Files.createDirectories(parent);
 		} catch (IOException exception) {
-			throw new IllegalStateException("Unable to create database directory " + parent, exception);
+			throw new IllegalStateException(
+					"Unable to create database directory %s".formatted(parent), exception);
 		}
 	}
 }

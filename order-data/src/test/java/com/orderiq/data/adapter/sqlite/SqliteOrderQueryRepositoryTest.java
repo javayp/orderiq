@@ -26,7 +26,7 @@ class SqliteOrderQueryRepositoryTest {
 	@BeforeEach
 	void setUp() {
 		SQLiteDataSource dataSource = new SQLiteDataSource();
-		dataSource.setUrl("jdbc:sqlite:" + tempDirectory.resolve("orders.db"));
+		dataSource.setUrl("jdbc:sqlite:%s".formatted(tempDirectory.resolve("orders.db")));
 		JdbcTemplate jdbc = new JdbcTemplate(dataSource);
 		jdbc.execute("""
 				CREATE TABLE orders (
