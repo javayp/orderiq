@@ -4,10 +4,9 @@ spring:
   sql:
     init:
       mode: always
+  jackson:
+    property-naming-strategy: SNAKE_CASE
 
 orderiq:
   database:
     path: ${ORDERIQ_DB_PATH:./data/orders.db}
-
-server:
-  port: ${SERVER_PORT:8000}
