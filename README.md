@@ -11,17 +11,6 @@ The exercise's example Python entry points are mapped directly to Java:
 `order-data` is the executable ETL equivalent of `etl.py`, while `order-ai`
 provides the REST API equivalent of `app.py`.
 
-## Exercise status
-
-| Area | Status |
-| --- | --- |
-| Part 1 — CSV ETL and SQLite load | Implemented and tested |
-| Part 2 — REST query API | Implemented and tested |
-| Part 3 — Docker and Kubernetes | Implemented and end-to-end tested |
-| Part 4a — Natural-language SQL query | Implemented and tested |
-| Part 4b — Semantic search | Implemented and tested |
-| Part 4d — Enterprise scaling | Complete one-page architecture answer |
-
 ## Documentation map
 
 | Document | Use it for |
