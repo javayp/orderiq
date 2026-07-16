@@ -146,7 +146,7 @@ before exposing the service to enterprise traffic.
 | Production exposure | Add identity, authorization, TLS, audit retention, rate limiting, and managed secrets |
 
 The required one-page enterprise design is in
-[Part 4d — scaling to 50 enterprise customers](docs/infrastructure.md).
+[Part 4d — scaling to 50 enterprise customers](docs/enterprise-architecture.md).
 
 ## Documentation map
 
@@ -155,7 +155,7 @@ The required one-page enterprise design is in
 - [Deployment](docs/deployment.md)
 - [Data module](docs/data-module.md)
 - [AI module](docs/ai-module.md)
-- [Part 4d enterprise design](docs/infrastructure.md)
+- [Part 4d enterprise design](docs/enterprise-architecture.md)
 
 ## Glossary
 
@@ -165,4 +165,4 @@ The required one-page enterprise design is in
 | NL-to-SQL | Converting a natural-language order question into validated SQL |
 | Query plan | Structured model response containing `QUERY` or `REJECTED`, SQL, and reason |
 | Semantic index | Order embeddings searched by cosine similarity |
-| Residency cell | Regional deployment boundary containing a tenant's data and model execution |
+| Residency cell | Regional boundary containing tenant data and enforcing approved model egress |

@@ -123,4 +123,4 @@ The Deployment uses:
 | ClusterIP only | Authenticated ingress/API gateway with TLS and rate limits |
 
 See [ARCHITECTURE.md](../ARCHITECTURE.md) for the implemented boundaries and
-[Part 4d](infrastructure.md) for the residency-cell design.
+[Part 4d](enterprise-architecture.md) for the residency-cell design.

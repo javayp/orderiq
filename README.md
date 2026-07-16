@@ -21,7 +21,7 @@ provides the REST API equivalent of `app.py`.
 | [Deployment](docs/deployment.md) | Docker and Kubernetes execution |
 | [Data module](docs/data-module.md) | ETL flow, rules, persistence, package design, and SOLID boundaries |
 | [AI module](docs/ai-module.md) | Guardrails, NL-to-SQL orchestration, cost controls, and semantic indexing |
-| [Part 4d](docs/infrastructure.md) | One-page enterprise residency and scaling design |
+| [Enterprise architecture](docs/enterprise-architecture.md) | Part 4d residency and 50-tenant scaling design |
 
 ## Architecture at a glance
 
@@ -174,18 +174,20 @@ behavior are in the [AI module](docs/ai-module.md).
 ## Part 4d — scaling to 50 enterprise customers
 
 The enterprise answer uses residency cells: EU in `eu-west`, US in `us-east`,
-and KSA in an approved local cloud. Tenant data, vectors, cache, and model
-execution stay in the home cell.
+and KSA in an approved local cloud. Tenant data, vectors, and cache stay in the
+home cell; its gateway permits prompt processing only at a tenant-approved
+regional cloud endpoint or private model. Exercise SQLite and the process-local
+index are replaced by regional HA relational storage and a vector service.
 
 | Concern | Decision | Accepted trade-off |
 | --- | --- | --- |
 | Vector isolation | One logical collection per tenant | Higher memory and index-management cost |
 | Model routing | Cell-local model gateway selects approved cloud or private Llama | More provider and policy operations |
 | PII | Minimize prompts, tokenize cloud-bound IDs, validate SQL, and redact logs | Less diagnostic detail |
-| Highest-leverage choice | Make the residency cell the data and execution boundary | Duplicated regional infrastructure |
+| Highest-leverage choice | Make the residency cell the data and model-egress enforcement boundary | Duplicated regional infrastructure |
 
 Read the required one-page answer in
-[Part 4d — enterprise scaling](docs/infrastructure.md).
+[Part 4d — enterprise scaling](docs/enterprise-architecture.md).
 
 ## Verification evidence
 
