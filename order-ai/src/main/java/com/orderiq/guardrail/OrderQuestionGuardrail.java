@@ -1,23 +1,18 @@
 package com.orderiq.guardrail;
 
 import com.orderiq.guardrail.OrderQueryFrame.Decision;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 /** Stateless, deterministic question guardrail used before the LLM. */
 @Component
+@RequiredArgsConstructor
 public final class OrderQuestionGuardrail {
 
 	private final OrderVocabularyConfiguration configuration;
 	private final OrderIntentAnalyzer analyzer;
-
-	public OrderQuestionGuardrail(
-			OrderVocabularyConfiguration configuration,
-			OrderIntentAnalyzer analyzer) {
-		this.configuration = configuration;
-		this.analyzer = analyzer;
-	}
 
 	public OrderQueryFrame evaluate(String question) {
 		String original = QuestionText.require(question);

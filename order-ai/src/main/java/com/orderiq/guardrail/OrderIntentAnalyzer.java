@@ -5,9 +5,7 @@ import com.orderiq.guardrail.OrderQueryFrame.Metric;
 import com.orderiq.guardrail.OrderQueryFrame.Sort;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -31,12 +29,16 @@ public final class OrderIntentAnalyzer {
 	}
 
 	OrderIntentEvidence analyze(String original, String normalized) {
-		Set<Metric> metrics = matches(normalized, configuration.metrics());
-		Set<Grouping> groupings = matches(normalized, configuration.groupings());
-		Sort sort = sort(normalized);
+		Set<Metric> metrics = VocabularyMatcher.matchingKeys(normalized, configuration.metrics());
+		Set<Grouping> groupings = VocabularyMatcher.matchingKeys(normalized, configuration.groupings());
+		Sort sort = VocabularyMatcher.firstMatchingKey(
+				normalized,
+				configuration.sorting(),
+				Sort.NONE);
 		List<String> customerIds = customerIds(original);
 		Optional<String> orderId = orderId(original);
-		List<String> unsupported = unsupported(normalized);
+		List<String> unsupported = List.copyOf(
+				VocabularyMatcher.matchingKeys(normalized, configuration.unsupported()));
 
 		addCustomerGrouping(normalized, metrics, groupings, customerIds);
 		boolean recognized = isRecognized(normalized, metrics, groupings, sort, customerIds, orderId);
@@ -57,11 +59,14 @@ public final class OrderIntentAnalyzer {
 	boolean hasOrderEvidence(String original, String normalized) {
 		return !customerIds(original).isEmpty()
 				|| orderId(original).isPresent()
-				|| !matches(normalized, configuration.metrics()).isEmpty()
-				|| !matches(normalized, configuration.groupings()).isEmpty()
-				|| sort(normalized) != Sort.NONE
+				|| !VocabularyMatcher.matchingKeys(normalized, configuration.metrics()).isEmpty()
+				|| !VocabularyMatcher.matchingKeys(normalized, configuration.groupings()).isEmpty()
+				|| VocabularyMatcher.firstMatchingKey(
+						normalized,
+						configuration.sorting(),
+						Sort.NONE) != Sort.NONE
 				|| VocabularyMatcher.contains(normalized, configuration.anchors())
-				|| !unsupported(normalized).isEmpty();
+				|| !VocabularyMatcher.matchingKeys(normalized, configuration.unsupported()).isEmpty();
 	}
 
 	private void addCustomerGrouping(
@@ -91,25 +96,6 @@ public final class OrderIntentAnalyzer {
 		return strongEvidence || contextualEvidence;
 	}
 
-	private Sort sort(String question) {
-		for (Map.Entry<Sort, List<String>> rule : configuration.sorting().entrySet()) {
-			if (VocabularyMatcher.contains(question, rule.getValue())) {
-				return rule.getKey();
-			}
-		}
-		return Sort.NONE;
-	}
-
-	private List<String> unsupported(String question) {
-		List<String> concepts = new ArrayList<>();
-		for (Map.Entry<String, List<String>> rule : configuration.unsupported().entrySet()) {
-			if (VocabularyMatcher.contains(question, rule.getValue())) {
-				concepts.add(rule.getKey());
-			}
-		}
-		return List.copyOf(concepts);
-	}
-
 	private List<String> customerIds(String question) {
 		Map<String, String> uniqueIds = new LinkedHashMap<>();
 		Matcher matcher = customerIdPattern.matcher(question);
@@ -125,13 +111,4 @@ public final class OrderIntentAnalyzer {
 		return matcher.find() ? Optional.of(matcher.group(1)) : Optional.empty();
 	}
 
-	private static <T> Set<T> matches(String question, Map<T, List<String>> rules) {
-		Set<T> values = new LinkedHashSet<>();
-		for (Map.Entry<T, List<String>> rule : rules.entrySet()) {
-			if (VocabularyMatcher.contains(question, rule.getValue())) {
-				values.add(rule.getKey());
-			}
-		}
-		return values;
-	}
 }

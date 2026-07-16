@@ -22,6 +22,10 @@ orderiq:
             - overview
           ORDER_COUNT:
             - how many orders
+            - how many distinct customers
+            - number of customers
+            - distinct customers
+            - unique customers
             - number of orders
             - count of orders
             - order count
@@ -36,6 +40,10 @@ orderiq:
             - overview
           TOTAL_REVENUE:
             - total revenue
+            - how much money did we make
+            - how much money was made
+            - money did we make
+            - money made
             - total sales
             - sales total
             - gross sales
@@ -291,6 +299,7 @@ orderiq:
           - ignore prior directions
           - ignore all prior directions
           - reveal system prompt
+          - reveal your system prompt
           - reveal the system prompt
           - show system prompt
           - hidden prompt
@@ -354,6 +363,7 @@ orderiq:
           - concentrate on
 
         incomplete-suffixes:
+          - and
           - last
           - past
           - previous

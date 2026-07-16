@@ -13,6 +13,7 @@ import com.orderiq.data.repository.OrderStore;
 import com.orderiq.data.service.OrderIngestionService;
 import com.orderiq.data.service.OrderTransformer;
 import com.orderiq.data.source.OrderSource;
+import lombok.RequiredArgsConstructor;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@RequiredArgsConstructor
 public final class DefaultOrderIngestionService implements OrderIngestionService {
 
 	private final OrderSource orderSource;
@@ -30,19 +32,6 @@ public final class DefaultOrderIngestionService implements OrderIngestionService
 	private final OrderStore orderStore;
 	private final OrdersReloadedPublisher eventPublisher;
 	private final Clock clock;
-
-	public DefaultOrderIngestionService(
-			OrderSource orderSource,
-			OrderTransformer rowTransformer,
-			OrderStore orderStore,
-			OrdersReloadedPublisher eventPublisher,
-			Clock clock) {
-		this.orderSource = orderSource;
-		this.rowTransformer = rowTransformer;
-		this.orderStore = orderStore;
-		this.eventPublisher = eventPublisher;
-		this.clock = clock;
-	}
 
 	@Override
 	public IngestionReport load(List<Path> sources) {

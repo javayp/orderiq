@@ -9,27 +9,36 @@ import org.springframework.ai.chat.client.ResponseEntity;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Slf4j
 @Component
-public class SpringAiOrderQueryModelClient implements OrderQueryModelClient {
+public final class SpringAiOrderQueryModelClient implements OrderQueryModelClient {
 
-    private final ChatClient chatClient;
+	private final ChatClient chatClient;
 
-    public SpringAiOrderQueryModelClient(ChatClient.Builder builder){
-        this.chatClient=builder.build();
-    }
+	public SpringAiOrderQueryModelClient(ChatClient.Builder builder) {
+		this.chatClient = builder.build();
+	}
 
-    @Override
-    public OrderQueryPlan generate(OrderQueryPrompt prompt) {
-        ResponseEntity<ChatResponse, OrderQueryPlan> chatResponseOrderQueryPlanResponseEntity = chatClient.prompt()
-                .system(prompt.systemMessage())
-                .user(prompt.userMessage())
-                .call()
-                .responseEntity(
-                        OrderQueryPlan.class,
-                        ChatClient.EntityParamSpec::useProviderStructuredOutput);
-        assert chatResponseOrderQueryPlanResponseEntity.getResponse() != null;
-        log.info("Token usage {}",chatResponseOrderQueryPlanResponseEntity.getResponse().getMetadata().getUsage());
-        return chatResponseOrderQueryPlanResponseEntity.entity();
-    }
+	@Override
+	public OrderQueryPlan generate(OrderQueryPrompt prompt) {
+		ResponseEntity<ChatResponse, OrderQueryPlan> response = chatClient.prompt()
+				.system(prompt.systemMessage())
+				.user(prompt.userMessage())
+				.call()
+				.responseEntity(
+						OrderQueryPlan.class,
+						ChatClient.EntityParamSpec::useProviderStructuredOutput);
+
+		ChatResponse chatResponse = Objects.requireNonNull(
+				response.getResponse(),
+				"OpenAI response metadata must not be null");
+		OrderQueryPlan plan = Objects.requireNonNull(
+				response.entity(),
+				"OpenAI structured query plan must not be null");
+
+		log.info("ORDER_LLM token_usage={}", chatResponse.getMetadata().getUsage());
+		return plan;
+	}
 }

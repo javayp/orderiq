@@ -2,6 +2,7 @@ package com.orderiq.data.repository.sqlite;
 
 import com.orderiq.data.model.Order;
 import com.orderiq.data.repository.OrderStore;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,7 +11,8 @@ import java.sql.PreparedStatement;
 import java.util.List;
 
 @Repository
-public class SqliteOrderStore implements OrderStore {
+@RequiredArgsConstructor
+public class OrderStoreImpl implements OrderStore {
 
 	private static final String INSERT_SQL = """
 			INSERT INTO orders (order_id, customer_id, order_date, amount_usd)
@@ -18,10 +20,6 @@ public class SqliteOrderStore implements OrderStore {
 			""";
 
 	private final JdbcTemplate jdbcTemplate;
-
-	public SqliteOrderStore(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
 
 	@Override
 	@Transactional

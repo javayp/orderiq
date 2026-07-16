@@ -1,6 +1,7 @@
 package com.orderiq.data.policy.impl;
 
 import com.orderiq.data.policy.OrderDateParser;
+import com.orderiq.data.util.TextValues;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -21,7 +22,7 @@ public final class FlexibleOrderDateParser implements OrderDateParser {
 
 	@Override
 	public Optional<LocalDate> parse(String value) {
-		String candidate = trimToNull(value);
+		String candidate = TextValues.trimToNull(value);
 		if (candidate == null) {
 			return Optional.empty();
 		}
@@ -39,11 +40,4 @@ public final class FlexibleOrderDateParser implements OrderDateParser {
 		return DateTimeFormatter.ofPattern(pattern, Locale.ROOT).withResolverStyle(ResolverStyle.STRICT);
 	}
 
-	private static String trimToNull(String value) {
-		if (value == null) {
-			return null;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? null : trimmed;
-	}
 }

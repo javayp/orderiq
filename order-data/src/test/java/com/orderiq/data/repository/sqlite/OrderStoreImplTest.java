@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class SqliteOrderStoreTest {
+class OrderStoreImplTest {
 
 	@TempDir
 	Path tempDirectory;
@@ -32,7 +32,7 @@ class SqliteOrderStoreTest {
 				    amount_usd NUMERIC NOT NULL
 				)
 				""");
-		SqliteOrderStore store = new SqliteOrderStore(jdbc);
+		OrderStoreImpl store = new OrderStoreImpl(jdbc);
 
 		store.replaceAll(List.of(new Order(
 				"1001", "C001", LocalDate.parse("2024-03-15"), new BigDecimal("11.00"))));

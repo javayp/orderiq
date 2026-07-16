@@ -2,9 +2,10 @@
 
 ## Responsibility
 
-`order-ai` is the executable and API boundary. It will own the REST controllers,
-the natural-language query orchestration, semantic search, and API-specific
-security and observability. It calls `order-data` through in-process Java ports.
+`order-ai` is the executable and API boundary. It owns the REST controllers,
+natural-language query orchestration, and API-specific security and
+observability. It calls `order-data` through in-process Java interfaces.
+Semantic search remains the next required implementation.
 
 This is a bounded query agent, not an autonomous general-purpose agent. Adding
 LangGraph or another agent framework is unnecessary for the required path; an
@@ -12,36 +13,31 @@ explicit Java state machine is easier to test and satisfies the one-retry rule.
 
 ## Natural-language query flow
 
-1. Accept the question and enforce length, character, and request-rate limits.
-2. Redact or tokenize unnecessary identifiers before any external model call.
-3. Build a small query frame locally: requested metric, filters, time window,
-   grouping, and requested result shape.
-4. Reject questions whose concepts are outside the order schema before paying
-   for an LLM call.
-5. Check a tenant/model/schema-version-aware semantic cache. A safe cache hit
-   reuses a previously validated query plan.
-6. On a cache miss, call the generative model once with the question, compact
-   `orders` schema, SQLite dialect, read-only rules, and structured-output
-   contract. This is where the LLM is called for NL-to-SQL.
-7. Parse the model output and validate the SQL structurally: exactly one
-   `SELECT`, allow-listed table and columns, no comments, no DDL/DML/PRAGMA,
-   bounded row count, and a database timeout.
-8. Execute through a read-only database connection. If parsing or execution
-   fails, call the model once more with only the original compact context and a
-   sanitized error. There is no third attempt.
-9. Render the answer deterministically from typed result rows. A second LLM call
-   is not needed merely to turn a number into a sentence.
-10. Return `answer`, `sql_used`, and `rows`; record latency, model, token usage,
-    retry outcome, and a redacted prompt fingerprint.
+1. Validate the request length and run the deterministic order-domain guardrail.
+2. Build a query frame containing the original question and locally extracted
+   order concepts.
+3. Reject unsafe, out-of-domain, and unavailable-schema questions before paying
+   for an LLM call when they can be identified locally.
+4. Call OpenAI once with the question, compact `orders` schema, SQLite dialect,
+   read-only rules, and structured-output contract.
+5. Accept either a structured `QUERY` plan or a `REJECTED` plan. A rejection
+   becomes HTTP `400` and never reaches SQLite.
+6. Validate generated SQL as one read-only `SELECT`/`WITH` statement with no
+   comments, DDL/DML/PRAGMA, internal SQLite tables, or additional statements.
+7. Execute the validated SQL against SQLite. If validation or execution fails,
+   call the model once more with the failed SQL and a bounded, single-line error.
+   The corrected SQL is validated and executed once; there is no third attempt.
+8. Render the answer deterministically from result rows. A separate LLM call is
+   not needed merely to turn database values into a sentence.
+9. Return `answer`, `sql_used`, and `rows`; log the prompt, query plan, and token
+   usage for each model call.
 
 ```mermaid
 flowchart LR
     Q["Question"] --> Frame["Local query frame + scope check"]
-    Frame --> Cache{"Validated plan cache"}
-    Cache -->|hit| Guard["SQL AST guard"]
-    Cache -->|miss| LLM["One LLM call"]
+    Frame --> LLM["One LLM call"]
     LLM --> Guard
-    Guard --> DB["Read-only SQLite execution"]
+    Guard["Read-only SQL validator"] --> DB["SQLite execution"]
     DB -->|sanitized error, once| LLM
     DB --> Answer["Deterministic answer formatter"]
 ```
@@ -51,13 +47,15 @@ flowchart LR
 - The stable system prompt and four-column schema are compact and cacheable by
   providers that support prompt-prefix caching.
 - Deterministic scope checks reject impossible questions without an LLM.
-- Validated plans are cached by normalized question, schema version, model, and
-  tenant; raw result rows are not shared across tenants.
 - The model produces structured output once. SQL validation and answer wording
   are local.
 - The expensive retry happens only after a concrete validation/runtime error.
-- Token ceilings and a small routing model are configuration, not hard-coded
-  provider assumptions.
+- The model identifier is configuration rather than a hard-coded provider
+  assumption, allowing representative quality, cost, and latency evaluation.
+
+A validated query-plan cache is a future optimization, not part of the current
+exercise implementation. It would require schema-version and tenant-aware cache
+keys before being safe for enterprise use.
 
 The exercise explicitly requires logging the prompt. Development mode can log
 the complete prompt for demonstration; production mode should log the template

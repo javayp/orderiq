@@ -3,19 +3,17 @@ package com.orderiq.data.cli;
 import com.orderiq.data.model.IngestionIssue;
 import com.orderiq.data.model.IngestionReport;
 import com.orderiq.data.service.OrderIngestionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 
 import java.nio.file.Path;
 import java.util.List;
 
+@RequiredArgsConstructor
 public final class OrderIngestionCli implements ApplicationRunner {
 
 	private final OrderIngestionService ingestionService;
-
-	public OrderIngestionCli(OrderIngestionService ingestionService) {
-		this.ingestionService = ingestionService;
-	}
 
 	@Override
 	public void run(ApplicationArguments arguments) {

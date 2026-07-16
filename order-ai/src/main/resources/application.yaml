@@ -5,7 +5,7 @@ spring:
     openai:
       api-key: ${OPENAI_API_KEY}
       chat:
-        model: ${OPENAI_MODEL}
+        model: ${OPENAI_MODEL:gpt-5.4-nano}
   config:
     import: classpath:order-vocabulary.yaml
   sql:

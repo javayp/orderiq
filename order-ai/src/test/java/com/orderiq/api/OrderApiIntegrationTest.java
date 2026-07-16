@@ -1,5 +1,7 @@
 package com.orderiq.api;
 
+import com.orderiq.client.OrderQueryModelClient;
+import com.orderiq.planning.OrderQueryPlan;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -9,12 +11,20 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.LocalDate;
 
+import static com.orderiq.planning.OrderQueryPlan.Status.QUERY;
+import static com.orderiq.planning.OrderQueryPlan.Status.REJECTED;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -42,6 +52,9 @@ class OrderApiIntegrationTest {
 	@Autowired
 	Clock clock;
 
+	@MockitoBean
+	OrderQueryModelClient orderQueryModelClient;
+
 	private LocalDate today;
 
 	@BeforeEach
@@ -52,6 +65,10 @@ class OrderApiIntegrationTest {
 		insert("RECENT-YESTERDAY", "C001", today.minusDays(1), "20.00");
 		insert("OLD", "C002", today.minusDays(2), "5.00");
 		insert("FUTURE", "C003", today.plusDays(1), "7.00");
+		when(orderQueryModelClient.generate(any())).thenReturn(new OrderQueryPlan(
+				QUERY,
+				"SELECT COUNT(*) AS total_orders FROM orders",
+				""));
 	}
 
 	@Test
@@ -108,8 +125,80 @@ class OrderApiIntegrationTest {
 							{"question":"Give me order statistics"}
 							"""))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.answer").value("Question accepted for LLM processing."))
-				.andExpect(jsonPath("$.rows.length()").value(0));
+				.andExpect(jsonPath("$.answer").value("Total orders: 4"))
+				.andExpect(jsonPath("$.sql_used").value("SELECT COUNT(*) AS total_orders FROM orders"))
+				.andExpect(jsonPath("$.rows[0].total_orders").value(4));
+	}
+
+	@Test
+	void retriesOneFailedSqlStatementAndReturnsTheCorrectedResult() throws Exception {
+		String correctedSql = "SELECT ROUND(SUM(amount_usd), 2) AS total_revenue FROM orders";
+		when(orderQueryModelClient.generate(any())).thenReturn(
+				new OrderQueryPlan(QUERY, "SELECT total FROM orders", ""),
+				new OrderQueryPlan(QUERY, correctedSql, ""));
+
+		mockMvc.perform(post("/orders/ask")
+					.contentType("application/json")
+					.content("""
+							{"question":"What is the total revenue?"}
+							"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.answer").value("Total revenue: 42.0"))
+				.andExpect(jsonPath("$.sql_used").value(correctedSql))
+				.andExpect(jsonPath("$.rows[0].total_revenue").value(42.0));
+
+		verify(orderQueryModelClient, times(2)).generate(any());
+	}
+
+	@Test
+	void returnsBadRequestWhenTheModelRejectsTheAvailableSchema() throws Exception {
+		when(orderQueryModelClient.generate(any())).thenReturn(new OrderQueryPlan(
+				REJECTED,
+				"",
+				"Product categories are not available in the orders schema."));
+
+		mockMvc.perform(post("/orders/ask")
+					.contentType("application/json")
+					.content("""
+							{"question":"Show me all orders"}
+							"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Invalid order query"))
+				.andExpect(jsonPath("$.detail")
+						.value("Product categories are not available in the orders schema."));
+	}
+
+	@Test
+	void returnsBadRequestForUnsupportedSchemaBeforeCallingTheModel() throws Exception {
+		mockMvc.perform(post("/orders/ask")
+					.contentType("application/json")
+					.content("""
+							{"question":"Show revenue by product category"}
+							"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Order question rejected"))
+				.andExpect(jsonPath("$.decision").value("UNSUPPORTED_SCHEMA"));
+
+		verify(orderQueryModelClient, never()).generate(any());
+	}
+
+	@Test
+	void stopsAfterTheCorrectedSqlAlsoFails() throws Exception {
+		when(orderQueryModelClient.generate(any())).thenReturn(
+				new OrderQueryPlan(QUERY, "DELETE FROM orders", ""),
+				new OrderQueryPlan(QUERY, "DROP TABLE orders", ""));
+
+		mockMvc.perform(post("/orders/ask")
+					.contentType("application/json")
+					.content("""
+							{"question":"Show me all orders"}
+							"""))
+				.andExpect(status().isBadGateway())
+				.andExpect(jsonPath("$.title").value("Order query execution failed"))
+				.andExpect(jsonPath("$.detail")
+						.value("Unable to generate an executable order query after one retry."));
+
+		verify(orderQueryModelClient, times(2)).generate(any());
 	}
 
 	@Test

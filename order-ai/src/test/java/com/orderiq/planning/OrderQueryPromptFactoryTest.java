@@ -29,8 +29,12 @@ class OrderQueryPromptFactoryTest {
 		assertTrue(prompt.systemMessage().contains("Return status REJECTED with an empty SQL"));
 		assertTrue(prompt.systemMessage().contains("Preserve every requested customer and order ID"));
 		assertTrue(prompt.systemMessage().contains("use IN (...)"));
+		assertTrue(prompt.systemMessage().contains("Customer IDs must filter customer_id"));
+		assertTrue(prompt.systemMessage().contains("one order across those customers"));
+		assertTrue(prompt.systemMessage().contains("exclude future-dated orders"));
 		assertTrue(prompt.userMessage().contains("total revenue for customers C001 and C002"));
-		assertFalse(prompt.userMessage().contains("Trusted guardrail hints"));
+		assertTrue(prompt.userMessage().contains("Customer IDs: C001, C002"));
+		assertFalse(prompt.userMessage().contains("Order ID:"));
 	}
 
 	@Test

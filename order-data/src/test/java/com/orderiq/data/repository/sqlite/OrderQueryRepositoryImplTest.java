@@ -16,12 +16,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-class SqliteOrderQueryRepositoryTest {
+class OrderQueryRepositoryImplTest {
 
 	@TempDir
 	Path tempDirectory;
 
-	private SqliteOrderQueryRepository repository;
+	private OrderQueryRepositoryImpl repository;
 
 	@BeforeEach
 	void setUp() {
@@ -36,12 +36,12 @@ class SqliteOrderQueryRepositoryTest {
 				    amount_usd NUMERIC NOT NULL
 				)
 				""");
-		new SqliteOrderStore(jdbc).replaceAll(List.of(
+		new OrderStoreImpl(jdbc).replaceAll(List.of(
 				order("1001", "C001", "2026-07-14", "10.00"),
 				order("1002", "C001", "2026-07-13", "11.00"),
 				order("1003", "C002", "2026-07-13", "5.50"),
 				order("1004", "C' OR 1=1 --", "2026-07-15", "2.00")));
-		repository = new SqliteOrderQueryRepository(jdbc);
+		repository = new OrderQueryRepositoryImpl(jdbc);
 	}
 
 	@Test

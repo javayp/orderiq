@@ -2,8 +2,8 @@ package com.orderiq.data;
 
 import com.orderiq.data.cli.OrderIngestionCli;
 import com.orderiq.data.config.OrderDataConfiguration;
-import com.orderiq.data.repository.sqlite.SqliteOrderQueryRepository;
-import com.orderiq.data.repository.sqlite.SqliteOrderStore;
+import com.orderiq.data.repository.sqlite.OrderQueryRepositoryImpl;
+import com.orderiq.data.repository.sqlite.OrderStoreImpl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -14,8 +14,8 @@ import java.util.Map;
 @EnableAutoConfiguration
 @Import({
 		OrderDataConfiguration.class,
-		SqliteOrderStore.class,
-		SqliteOrderQueryRepository.class,
+		OrderStoreImpl.class,
+		OrderQueryRepositoryImpl.class,
 		OrderIngestionCli.class
 })
 public class OrderDataApplication {

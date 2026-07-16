@@ -1,5 +1,7 @@
 package com.orderiq.guardrail;
 
+import com.orderiq.util.TextSupport;
+
 import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -19,10 +21,7 @@ final class QuestionText {
 	}
 
 	static String require(String question) {
-		if (question == null || question.isBlank()) {
-			throw new IllegalArgumentException("question must not be blank");
-		}
-		return question;
+		return TextSupport.requireText(question, "question");
 	}
 
 	static String normalize(String question) {

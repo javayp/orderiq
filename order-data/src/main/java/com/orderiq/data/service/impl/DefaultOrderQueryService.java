@@ -5,22 +5,19 @@ import com.orderiq.data.model.Order;
 import com.orderiq.data.model.OrderStatistics;
 import com.orderiq.data.repository.OrderQueryRepository;
 import com.orderiq.data.service.OrderQueryService;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
+@RequiredArgsConstructor
 public final class DefaultOrderQueryService implements OrderQueryService {
 
 	private static final int MAX_CUSTOMER_ID_LENGTH = 100;
 
 	private final OrderQueryRepository repository;
 	private final Clock clock;
-
-	public DefaultOrderQueryService(OrderQueryRepository repository, Clock clock) {
-		this.repository = repository;
-		this.clock = clock;
-	}
 
 	@Override
 	public List<Order> forCustomer(String customerId) {

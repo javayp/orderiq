@@ -1,6 +1,7 @@
 package com.orderiq.planning;
 
 import com.orderiq.guardrail.OrderQueryFrame;
+import com.orderiq.util.TextSupport;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
@@ -19,8 +20,12 @@ public final class OrderQueryPromptFactory {
 			Rules:
 			- Use only this schema; reject unavailable data instead of guessing.
 			- Preserve every requested customer and order ID; use IN (...) for multiple IDs.
+			- Values listed as Customer IDs must filter customer_id, never order_id.
+			- Values listed as Order IDs must filter order_id, never customer_id.
 			- Group by customer_id for per-customer results, but not for a combined total.
-			- Use LIMIT 1 only when one highest, lowest, latest, or oldest result is requested.
+			- Highest or lowest among listed customers means one order across those customers: filter customer_id, order by amount_usd, and use LIMIT 1; group only when explicitly requested per customer.
+			- Use LIMIT 1 when one highest, lowest, latest, or oldest result is requested.
+			- Relative past windows must end at date('now') and exclude future-dated orders.
 			- Use SQLite date functions, round money aggregates to two decimals, and use snake_case aliases.
 			- Deterministically order row lists and limit them to at most 100 rows.
 			- No writes, DDL, PRAGMA, ATTACH, DETACH, SELECT *, comments, or multiple statements.
@@ -41,8 +46,8 @@ public final class OrderQueryPromptFactory {
 			String failedSql,
 			String errorMessage) {
 		requireAllowed(frame);
-		failedSql = requireText(failedSql, "failedSql");
-		errorMessage = requireText(errorMessage, "errorMessage");
+		failedSql = TextSupport.requireText(failedSql, "failedSql");
+		errorMessage = TextSupport.requireText(errorMessage, "errorMessage");
 
 		String userMessage = """
 				%s
@@ -55,7 +60,13 @@ public final class OrderQueryPromptFactory {
 	}
 
 	private static String initialUserMessage(OrderQueryFrame frame) {
-		return "Question: %s".formatted(requireText(frame.originalQuestion(), "originalQuestion"));
+		String question = TextSupport.requireText(frame.originalQuestion(), "originalQuestion");
+		StringBuilder message = new StringBuilder("Question: ").append(question);
+		if (!frame.customerIds().isEmpty()) {
+			message.append("\nCustomer IDs: ").append(String.join(", ", frame.customerIds()));
+		}
+		frame.orderId().ifPresent(orderId -> message.append("\nOrder ID: ").append(orderId));
+		return message.toString();
 	}
 
 	private static void requireAllowed(OrderQueryFrame frame) {
@@ -63,13 +74,6 @@ public final class OrderQueryPromptFactory {
 		if (!frame.allowed()) {
 			throw new IllegalArgumentException("Only an allowed query frame can be sent to the LLM");
 		}
-	}
-
-	private static String requireText(String value, String field) {
-		if (value == null || value.isBlank()) {
-			throw new IllegalArgumentException("%s must not be blank".formatted(field));
-		}
-		return value.strip();
 	}
 
 }

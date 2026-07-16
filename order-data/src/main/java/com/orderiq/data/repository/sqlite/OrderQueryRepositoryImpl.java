@@ -3,6 +3,7 @@ package com.orderiq.data.repository.sqlite;
 import com.orderiq.data.model.Order;
 import com.orderiq.data.model.OrderStatistics;
 import com.orderiq.data.repository.OrderQueryRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,8 @@ import java.util.Map;
 import java.util.Objects;
 
 @Repository
-public class SqliteOrderQueryRepository implements OrderQueryRepository {
+@RequiredArgsConstructor
+public class OrderQueryRepositoryImpl implements OrderQueryRepository {
 
 	private static final RowMapper<Order> ORDER_ROW_MAPPER = (resultSet, rowNumber) -> new Order(
 			resultSet.getString("order_id"),
@@ -38,10 +40,6 @@ public class SqliteOrderQueryRepository implements OrderQueryRepository {
 			""";
 
 	private final JdbcTemplate jdbcTemplate;
-
-	public SqliteOrderQueryRepository(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
 
 	@Override
 	public List<Order> findByCustomerId(String customerId) {
@@ -83,16 +81,12 @@ public class SqliteOrderQueryRepository implements OrderQueryRepository {
 	}
 
 	private Map<LocalDate, Long> queryOrdersPerDay() {
-		List<DailyOrderCount> dailyCounts = jdbcTemplate.query(
-				DAILY_ORDER_COUNTS_SQL,
-				(resultSet, rowNumber) -> new DailyOrderCount(
-						LocalDate.parse(resultSet.getString("order_date")),
-						resultSet.getLong("order_count")));
-
 		Map<LocalDate, Long> ordersPerDay = new LinkedHashMap<>();
-		for (DailyOrderCount dailyCount : dailyCounts) {
-			ordersPerDay.put(dailyCount.orderDate(), dailyCount.orderCount());
-		}
+		jdbcTemplate.query(DAILY_ORDER_COUNTS_SQL, resultSet -> {
+			ordersPerDay.put(
+					LocalDate.parse(resultSet.getString("order_date")),
+					resultSet.getLong("order_count"));
+		});
 		return ordersPerDay;
 	}
 
@@ -106,6 +100,4 @@ public class SqliteOrderQueryRepository implements OrderQueryRepository {
 	private record RevenueAggregate(BigDecimal totalRevenue, long orderCount) {
 	}
 
-	private record DailyOrderCount(LocalDate orderDate, long orderCount) {
-	}
 }

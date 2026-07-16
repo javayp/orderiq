@@ -1,6 +1,9 @@
 package com.orderiq.guardrail;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +34,25 @@ final class VocabularyMatcher {
 	static int nextMatchEnd(String text, String phrase, int fromIndex) {
 		Matcher matcher = pattern(phrase).matcher(text);
 		return matcher.find(fromIndex) ? matcher.end() : -1;
+	}
+
+	static <T> Set<T> matchingKeys(String text, Map<T, List<String>> rules) {
+		Set<T> matches = new LinkedHashSet<>();
+		for (Map.Entry<T, List<String>> rule : rules.entrySet()) {
+			if (contains(text, rule.getValue())) {
+				matches.add(rule.getKey());
+			}
+		}
+		return matches;
+	}
+
+	static <T> T firstMatchingKey(String text, Map<T, List<String>> rules, T fallback) {
+		for (Map.Entry<T, List<String>> rule : rules.entrySet()) {
+			if (contains(text, rule.getValue())) {
+				return rule.getKey();
+			}
+		}
+		return fallback;
 	}
 
 	private static Pattern pattern(String phrase) {
