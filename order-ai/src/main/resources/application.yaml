@@ -1,6 +1,11 @@
 spring:
   application:
     name: orderiq
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        model: ${OPENAI_MODEL}
   config:
     import: classpath:order-vocabulary.yaml
   sql:
