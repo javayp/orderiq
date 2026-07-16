@@ -1,5 +1,7 @@
 # AI module
 
+[Back to README](../README.md)
+
 ## Responsibility
 
 `order-ai` is the executable and API boundary. It owns the REST controllers,
