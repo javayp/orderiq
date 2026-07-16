@@ -1,9 +1,9 @@
 package com.orderiq.data;
 
-import com.orderiq.data.adapter.sqlite.SqliteOrderQueryRepository;
-import com.orderiq.data.adapter.sqlite.SqliteOrderStore;
 import com.orderiq.data.cli.OrderIngestionCli;
 import com.orderiq.data.config.OrderDataConfiguration;
+import com.orderiq.data.repository.sqlite.SqliteOrderQueryRepository;
+import com.orderiq.data.repository.sqlite.SqliteOrderStore;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;

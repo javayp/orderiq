@@ -2,8 +2,8 @@ package com.orderiq.data.config;
 
 import com.orderiq.data.model.Order;
 import com.orderiq.data.model.OrderStatistics;
-import com.orderiq.data.port.OrderQueryRepository;
-import com.orderiq.data.port.OrderStore;
+import com.orderiq.data.repository.OrderQueryRepository;
+import com.orderiq.data.repository.OrderStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.sqlite.SQLiteDataSource;

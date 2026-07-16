@@ -1,4 +1,4 @@
-package com.orderiq.data.model;
+package com.orderiq.data.event;
 
 import java.time.Instant;
 

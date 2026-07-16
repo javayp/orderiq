@@ -3,7 +3,7 @@ package com.orderiq.data.service.impl;
 import com.orderiq.data.exception.InvalidOrderQueryException;
 import com.orderiq.data.model.Order;
 import com.orderiq.data.model.OrderStatistics;
-import com.orderiq.data.port.OrderQueryRepository;
+import com.orderiq.data.repository.OrderQueryRepository;
 import com.orderiq.data.service.OrderQueryService;
 import org.junit.jupiter.api.Test;
 

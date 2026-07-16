@@ -1,13 +1,13 @@
 package com.orderiq.data.service.impl;
 
-import com.orderiq.data.adapter.csv.CsvOrderReader;
+import com.orderiq.data.event.OrdersReloadedEvent;
 import com.orderiq.data.model.IngestionReport;
 import com.orderiq.data.model.Order;
-import com.orderiq.data.model.OrdersReloadedEvent;
 import com.orderiq.data.policy.impl.FixedRateCurrencyConverter;
 import com.orderiq.data.policy.impl.FlexibleOrderDateParser;
-import com.orderiq.data.port.OrderStore;
+import com.orderiq.data.repository.OrderStore;
 import com.orderiq.data.service.OrderIngestionService;
+import com.orderiq.data.source.csv.CsvOrderReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

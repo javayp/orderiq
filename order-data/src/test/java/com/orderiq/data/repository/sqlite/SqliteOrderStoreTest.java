@@ -1,4 +1,4 @@
-package com.orderiq.data.adapter.sqlite;
+package com.orderiq.data.repository.sqlite;
 
 import com.orderiq.data.model.Order;
 import org.junit.jupiter.api.Test;

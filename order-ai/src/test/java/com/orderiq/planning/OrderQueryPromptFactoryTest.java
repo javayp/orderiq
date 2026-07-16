@@ -25,7 +25,8 @@ class OrderQueryPromptFactoryTest {
 
 		assertTrue(prompt.systemMessage().contains("order_id TEXT PRIMARY KEY"));
 		assertTrue(prompt.systemMessage().contains("amount_usd NUMERIC NOT NULL"));
-		assertTrue(prompt.systemMessage().contains("\"status\":\"QUERY|REJECTED\""));
+		assertTrue(prompt.systemMessage().contains("Return status QUERY with the generated SQL"));
+		assertTrue(prompt.systemMessage().contains("Return status REJECTED with an empty SQL"));
 		assertTrue(prompt.systemMessage().contains("Preserve every requested customer and order ID"));
 		assertTrue(prompt.systemMessage().contains("use IN (...)"));
 		assertTrue(prompt.userMessage().contains("total revenue for customers C001 and C002"));

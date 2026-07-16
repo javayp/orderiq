@@ -1,8 +1,8 @@
-package com.orderiq.data.adapter.sqlite;
+package com.orderiq.data.repository.sqlite;
 
 import com.orderiq.data.model.Order;
 import com.orderiq.data.model.OrderStatistics;
-import com.orderiq.data.port.OrderQueryRepository;
+import com.orderiq.data.repository.OrderQueryRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;

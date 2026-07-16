@@ -1,11 +1,12 @@
-package com.orderiq.service;
+package com.orderiq.service.impl;
 
 import com.orderiq.guardrail.OrderQueryFrame;
 import com.orderiq.guardrail.OrderQuestionGuardrail;
 import com.orderiq.api.model.AskOrderRequest;
 import com.orderiq.api.model.AskOrderResponse;
 import com.orderiq.exception.OrderQuestionRejectedException;
-import com.orderiq.planning.OrderQueryPlan;
+import com.orderiq.planning.OrderQueryPlanner;
+import com.orderiq.service.OrderAnswerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,17 +17,17 @@ public final class OrderAnswerServiceImpl implements OrderAnswerService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(OrderAnswerServiceImpl.class);
 
 	private final OrderQuestionGuardrail orderQuestionGuardrail;
-	private final OrderQueryPlan orderQueryPlan;
+	private final OrderQueryPlanner orderQueryPlanner;
 
-	public OrderAnswerServiceImpl(OrderQuestionGuardrail orderQuestionGuardrail, OrderQueryPlan orderQueryPlan) {
+	public OrderAnswerServiceImpl(OrderQuestionGuardrail orderQuestionGuardrail, OrderQueryPlanner orderQueryPlanner) {
 		this.orderQuestionGuardrail = orderQuestionGuardrail;
-        this.orderQueryPlan = orderQueryPlan;
+        this.orderQueryPlanner = orderQueryPlanner;
     }
 
 	@Override
 	public AskOrderResponse findAnswer(AskOrderRequest request) {
 		OrderQueryFrame orderQueryFrame = validateQuestionIntent(request);
-		orderQueryPlan.plan(orderQueryFrame);
+		orderQueryPlanner.plan(orderQueryFrame);
 		return null;
 	}
 

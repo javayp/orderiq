@@ -1,6 +1,4 @@
-package com.orderiq.data.port;
-
-import com.orderiq.data.model.OrdersReloadedEvent;
+package com.orderiq.data.event;
 
 @FunctionalInterface
 public interface OrdersReloadedPublisher {

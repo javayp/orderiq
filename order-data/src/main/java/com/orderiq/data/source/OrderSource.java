@@ -1,4 +1,4 @@
-package com.orderiq.data.port;
+package com.orderiq.data.source;
 
 import com.orderiq.data.model.RawOrderRow;
 

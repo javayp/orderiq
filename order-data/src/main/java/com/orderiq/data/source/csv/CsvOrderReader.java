@@ -1,8 +1,8 @@
-package com.orderiq.data.adapter.csv;
+package com.orderiq.data.source.csv;
 
 import com.orderiq.data.exception.IngestionException;
 import com.orderiq.data.model.RawOrderRow;
-import com.orderiq.data.port.OrderSource;
+import com.orderiq.data.source.OrderSource;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;

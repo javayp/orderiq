@@ -1,4 +1,4 @@
-package com.orderiq.data.port;
+package com.orderiq.data.repository;
 
 import com.orderiq.data.model.Order;
 import com.orderiq.data.model.OrderStatistics;

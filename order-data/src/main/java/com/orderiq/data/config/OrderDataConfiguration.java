@@ -1,20 +1,20 @@
 package com.orderiq.data.config;
 
-import com.orderiq.data.adapter.csv.CsvOrderReader;
+import com.orderiq.data.event.OrdersReloadedPublisher;
 import com.orderiq.data.policy.CurrencyConverter;
 import com.orderiq.data.policy.OrderDateParser;
 import com.orderiq.data.policy.impl.FixedRateCurrencyConverter;
 import com.orderiq.data.policy.impl.FlexibleOrderDateParser;
-import com.orderiq.data.port.OrderQueryRepository;
-import com.orderiq.data.port.OrderSource;
-import com.orderiq.data.port.OrderStore;
-import com.orderiq.data.port.OrdersReloadedPublisher;
+import com.orderiq.data.repository.OrderQueryRepository;
+import com.orderiq.data.repository.OrderStore;
 import com.orderiq.data.service.OrderIngestionService;
 import com.orderiq.data.service.OrderQueryService;
 import com.orderiq.data.service.OrderTransformer;
 import com.orderiq.data.service.impl.DefaultOrderIngestionService;
 import com.orderiq.data.service.impl.DefaultOrderQueryService;
 import com.orderiq.data.service.impl.DefaultOrderTransformer;
+import com.orderiq.data.source.OrderSource;
+import com.orderiq.data.source.csv.CsvOrderReader;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 import org.springframework.beans.factory.annotation.Value;
