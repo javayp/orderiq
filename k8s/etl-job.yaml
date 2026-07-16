@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: orderiq-etl
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: orderiq
+        app.kubernetes.io/component: etl
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: etl
+          image: orderiq:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - java
+            - -jar
+            - /app/order-data.jar
+            - load
+            - /app/data/orders.csv
+          envFrom:
+            - configMapRef:
+                name: orderiq-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: orderiq-data

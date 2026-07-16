@@ -1,5 +1,6 @@
 plugins {
 	id 'java-library'
+	id 'org.springframework.boot'
 	id 'io.spring.dependency-management'
 }
 
@@ -13,7 +14,18 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.apache.commons:commons-csv:1.14.1'
 	implementation 'org.xerial:sqlite-jdbc'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// The ETL module is executable and also remains a library for order-ai.
+tasks.named('jar') {
+	enabled = true
+}
+
+tasks.named('bootRun') {
+	workingDir rootProject.projectDir
 }
