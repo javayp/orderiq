@@ -62,6 +62,11 @@ class DefaultOrderQueryServiceTest {
 		private LocalDate toInclusive;
 
 		@Override
+		public List<Order> findAll() {
+			return List.of();
+		}
+
+		@Override
 		public List<Order> findByCustomerId(String customerId) {
 			this.customerId = customerId;
 			return List.of();
@@ -77,6 +82,11 @@ class DefaultOrderQueryServiceTest {
 		@Override
 		public OrderStatistics statistics() {
 			return new OrderStatistics(BigDecimal.ZERO, BigDecimal.ZERO, Map.of());
+		}
+
+		@Override
+		public long datasetRevision() {
+			return 0;
 		}
 	}
 }

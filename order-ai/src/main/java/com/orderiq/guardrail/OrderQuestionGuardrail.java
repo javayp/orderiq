@@ -38,6 +38,15 @@ public final class OrderQuestionGuardrail {
 				reason(decision, evidence));
 	}
 
+	/** Reuses the configured vocabulary for short semantic-search fragments. */
+	public boolean hasSupportedOrderEvidence(String question) {
+		String original = QuestionText.require(question);
+		String normalized = QuestionText.normalize(original);
+		OrderIntentEvidence evidence = analyzer.analyze(original, normalized);
+		return evidence.unsupported().isEmpty()
+				&& analyzer.hasOrderEvidence(original, normalized);
+	}
+
 	private Optional<OrderQueryFrame> earlyRejection(String original, String normalized) {
 		if (VocabularyMatcher.contains(
 				QuestionText.securityText(normalized), configuration.securityIndicators())) {

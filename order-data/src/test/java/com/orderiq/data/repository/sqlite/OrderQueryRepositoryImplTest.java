@@ -36,12 +36,27 @@ class OrderQueryRepositoryImplTest {
 				    amount_usd NUMERIC NOT NULL
 				)
 				""");
+		jdbc.execute("""
+				CREATE TABLE order_dataset_state (
+				    state_id INTEGER PRIMARY KEY,
+				    revision INTEGER NOT NULL
+				)
+				""");
+		jdbc.update("INSERT INTO order_dataset_state (state_id, revision) VALUES (1, 0)");
 		new OrderStoreImpl(jdbc).replaceAll(List.of(
 				order("1001", "C001", "2026-07-14", "10.00"),
 				order("1002", "C001", "2026-07-13", "11.00"),
 				order("1003", "C002", "2026-07-13", "5.50"),
 				order("1004", "C' OR 1=1 --", "2026-07-15", "2.00")));
 		repository = new OrderQueryRepositoryImpl(jdbc);
+	}
+
+	@Test
+	void returnsAllOrdersAndTheDatasetRevision() {
+		assertThat(repository.findAll())
+				.extracting(Order::orderId)
+				.containsExactly("1001", "1002", "1003", "1004");
+		assertThat(repository.datasetRevision()).isEqualTo(1L);
 	}
 
 	@Test

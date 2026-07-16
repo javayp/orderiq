@@ -5,7 +5,7 @@
 `order-ai` is the executable and API boundary. It owns the REST controllers,
 natural-language query orchestration, and API-specific security and
 observability. It calls `order-data` through in-process Java interfaces.
-Semantic search remains the next required implementation.
+It also owns the local embedding model and in-memory semantic order index.
 
 This is a bounded query agent, not an autonomous general-purpose agent. Adding
 LangGraph or another agent framework is unnecessary for the required path; an
@@ -64,11 +64,28 @@ the logging system.
 
 ## Semantic search flow
 
-The embedding model is separate from the generative LLM. At startup it converts
-each order into a short canonical sentence and builds an in-memory cosine index.
-Queries use the same model. On `OrdersReloadedEvent`, a background worker builds
-a complete replacement index and atomically swaps the active reference, so
-in-flight searches continue using the old immutable index.
+The embedding model is separate from the generative LLM. At startup the local
+`all-MiniLM-L6-v2` ONNX model converts each order into a short canonical sentence
+and builds an in-memory cosine index. The sentence includes data-relative value
+and recency labels, including a compound label for high-value recent orders.
+Queries use the same model, and matches below the configured minimum score are
+omitted.
+
+Semantic requests pass through the existing YAML-driven `OrderQuestionGuardrail`
+before embedding. The semantic path reuses its supported-order-evidence check to
+accept concise search fragments while preserving the stricter rules used before
+the LLM. No second vocabulary or semantic-specific bad-input list is maintained.
+
+Semantic similarity is deliberately kept separate from exact SQL semantics.
+The semantic endpoint ranks fuzzy textual similarity; exact customer IDs,
+amount comparisons, and date predicates are handled by `/orders/ask`.
+
+The ETL and API can run in separate JVMs, so a Spring event alone is not a valid
+cross-process refresh mechanism. The ETL increments a SQLite dataset revision in
+the order-replacement transaction. The API polls that revision, builds a complete
+replacement index in bounded batches, and atomically swaps the active reference.
+An in-process `OrdersReloadedEvent` is also handled as a fast path. In-flight
+searches continue using the old immutable snapshot during every rebuild.
 
 For the small exercise dataset, an in-memory Java vector matrix is sufficient
 and makes tenant filtering easy to reason about. The enterprise design replaces

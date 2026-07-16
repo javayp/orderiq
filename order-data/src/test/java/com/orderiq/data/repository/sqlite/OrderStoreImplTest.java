@@ -32,6 +32,7 @@ class OrderStoreImplTest {
 				    amount_usd NUMERIC NOT NULL
 				)
 				""");
+		createDatasetState(jdbc);
 		OrderStoreImpl store = new OrderStoreImpl(jdbc);
 
 		store.replaceAll(List.of(new Order(
@@ -44,5 +45,18 @@ class OrderStoreImplTest {
 		assertThat(row.get("order_date")).isEqualTo("2024-03-15");
 		assertThat(row.get("date_type")).isEqualTo("text");
 		assertThat(new BigDecimal(row.get("amount_usd").toString())).isEqualByComparingTo("11.00");
+		assertThat(jdbc.queryForObject(
+				"SELECT revision FROM order_dataset_state WHERE state_id = 1",
+				Long.class)).isEqualTo(1L);
+	}
+
+	private static void createDatasetState(JdbcTemplate jdbc) {
+		jdbc.execute("""
+				CREATE TABLE order_dataset_state (
+				    state_id INTEGER PRIMARY KEY,
+				    revision INTEGER NOT NULL
+				)
+				""");
+		jdbc.update("INSERT INTO order_dataset_state (state_id, revision) VALUES (1, 0)");
 	}
 }

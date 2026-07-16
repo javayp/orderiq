@@ -2,8 +2,8 @@
 
 ## Exercise deployment
 
-Infrastructure is separate from the two code modules. The planned submission
-contains one multi-stage Docker image with two process entry points, not a
+Infrastructure is separate from the two code modules. The submission contains
+one multi-stage Docker image with two process entry points, not a
 cluster per Java module.
 
 1. Gradle builds an executable `order-data` ETL JAR and an executable `order-ai`
@@ -11,7 +11,8 @@ cluster per Java module.
    `order-ai` at build time.
 2. The runtime image contains a Java 21 JRE and both executable JARs, runs as a
    non-root user, exposes port 8000, and defines a health check.
-3. A Kubernetes `Deployment` runs the API with liveness/readiness probes.
+3. A one-replica Kubernetes `Deployment` runs the API. `/healthz` checks process
+   liveness while `/readyz` prevents traffic until the semantic index is ready.
 4. A `ClusterIP` Service exposes it inside the cluster.
 5. A `ConfigMap` supplies non-secret settings such as the database path and
    model identifiers. Secrets come from a Kubernetes Secret or external secret

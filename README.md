@@ -11,18 +11,20 @@ internal HTTP boundary.
 | --- | --- |
 | Part 1 — CSV ETL and SQLite load | Implemented and tested |
 | Part 2 — REST query API | Implemented and tested |
-| Part 3 — Docker and Kubernetes | Planned, not implemented |
+| Part 3 — Docker and Kubernetes | Implemented and Docker-tested |
 | Part 4a — Natural-language SQL query | Implemented and tested |
-| Part 4b — Semantic search | Planned, not implemented |
+| Part 4b — Semantic search | Implemented and tested |
 | Part 4d — Enterprise scaling write-up | Drafted in `docs/infrastructure.md` |
 
 ## Project structure
 
 ```text
 orderiq/
+├── Dockerfile    # Multi-stage image for the ETL and API entry points
 ├── order-data/   # Runnable ETL plus models, services, and repositories
 ├── order-ai/     # Long-running REST/AI service
 ├── data/         # Supplied CSV input; generated SQLite files are ignored
+├── k8s/          # Job, Deployment, Service, ConfigMap, PVC, and Secret example
 └── docs/         # Architecture by responsibility
 ```
 
@@ -112,12 +114,68 @@ GET /orders/customer/{customer_id}
 GET /orders/stats
 GET /orders/recent?days=N
 POST /orders/ask
+GET /orders/semantic_search?q=high+value+recent+orders&top_k=5
 GET /healthz
+GET /readyz
 ```
 
 JSON fields use snake case. `/orders/stats` returns `total_revenue`,
 `avg_order_value`, and `orders_per_day` as required. A recent window is inclusive
 and ends on the current UTC date; future-dated records are not treated as recent.
+
+`/healthz` is the liveness endpoint. `/readyz` returns `503` until the local
+embedding model has built the first complete semantic index, then returns `200`.
+
+## Docker and Kubernetes deployment
+
+The multi-stage image builds both executable JARs and runs as UID/GID `10001`.
+The API is the default process; the ETL overrides the image entry point and
+writes SQLite into the same persistent `/data` volume used by the API.
+
+Build and run the complete flow locally:
+
+```shell
+docker build -t orderiq:local .
+docker volume create orderiq-data
+
+docker run --rm \
+  --entrypoint java \
+  -v orderiq-data:/data \
+  orderiq:local \
+  -jar /app/order-data.jar load /app/data/orders.csv
+
+docker run --rm \
+  -p 8000:8000 \
+  --env OPENAI_API_KEY \
+  -v orderiq-data:/data \
+  orderiq:local
+```
+
+The first API start downloads `all-MiniLM-L6-v2`; its files remain in the
+persistent volume. Wait for `curl --fail http://localhost:8000/readyz` before
+sending semantic searches. The image-level health check uses `/healthz`.
+
+The `k8s/` manifests deliberately run one API replica with a `Recreate`
+strategy because multiple pods must not write to one SQLite file. Create the
+secret outside source control, load or push the image for your cluster, and
+apply the resources in this order:
+
+```shell
+kubectl create secret generic orderiq-secrets \
+  --from-literal=openai-api-key="$OPENAI_API_KEY"
+
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/persistent-volume-claim.yaml
+kubectl apply -f k8s/etl-job.yaml
+kubectl wait --for=condition=complete job/orderiq-etl --timeout=120s
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
+`k8s/secret.example.yaml` documents the expected Secret shape but must not be
+used with its placeholder value. The Deployment uses `/healthz` for liveness
+and `/readyz` for readiness, so Kubernetes does not route semantic traffic to a
+pod with an incomplete index.
 
 ## Part 4a — natural-language order queries
 
@@ -219,3 +277,71 @@ Outcome: corrected SQL succeeds and is returned as sql_used
 If the corrected SQL also fails, the service stops and returns `502` with a
 non-sensitive error message. The failed SQL and database error remain in server
 logs for diagnosis.
+
+## Part 4b — semantic order search
+
+The semantic endpoint uses the local
+`sentence-transformers/all-MiniLM-L6-v2` ONNX model through Spring AI:
+
+```shell
+curl "http://localhost:8080/orders/semantic_search?q=high%20value%20recent%20orders&top_k=5"
+```
+
+Each normalized order is embedded as a short sentence:
+
+```text
+order 145317, customer SM-20320, amount 23661.23 USD, very high value
+unusually expensive large premium, date 2024-03-18, very old historical earliest,
+independent value and date profile, customer purchase transaction
+```
+
+Value and date descriptions are calculated from the loaded dataset rather than
+fixed dollar or calendar cutoffs. The bottom/top quartiles receive low/high and
+historical/recent labels; the bottom/top deciles receive stronger labels. Orders
+that are both high-value and recent receive a compound description so a mixed
+intent is represented in one embedding.
+
+Before generating a query embedding, the endpoint reuses the same
+`OrderQuestionGuardrail` and external `order-vocabulary.yaml` used by
+`POST /orders/ask`. Unsafe, abusive, unsupported-schema, multiple-intent, and
+out-of-domain input is rejected with the existing decision-aware `400` response.
+The semantic path also reuses the guardrail's order-evidence check so short
+search fragments such as `old historical orders` remain valid without weakening
+the stricter natural-language-to-SQL admission policy or creating a second
+vocabulary.
+
+`all-MiniLM-L6-v2` produces compact 384-dimensional sentence embeddings, runs
+locally in the Java process, and is appropriate for short structured text. The
+first use downloads and caches the ONNX model; subsequent starts reuse it.
+
+For the supplied dataset, the application stores vectors in an immutable
+in-memory snapshot and calculates cosine similarity directly. A linear scan of
+roughly 5,000 small vectors is simple, predictable, and avoids an unnecessary
+vector-database dependency. The enterprise architecture replaces this with
+tenant-scoped vector collections when dataset size or tenant isolation requires
+it.
+
+The ETL advances `order_dataset_state.revision` in the same transaction that
+replaces the orders. `order-ai` polls that revision every five seconds. When it
+changes, the service embeds the complete new dataset in bounded batches, builds
+a replacement snapshot without modifying the active one, and atomically swaps
+the reference. In-flight searches therefore continue using the previous
+immutable snapshot instead of blocking on a partial rebuild.
+
+`q` must be non-blank and no longer than 500 characters. `top_k` defaults to 5
+and must be between 1 and 50. Matches below the configurable cosine score
+`orderiq.semantic.minimum-score` (default `0.20`) are omitted. The score floor is
+a retrieval-quality filter for already admitted order-domain searches; it is
+not used as an intent or safety classifier.
+
+The transformer files are cached under `./data/embedding-model-cache` by
+default. Set `ORDERIQ_EMBEDDING_CACHE` to move the cache, for example to a
+persistent container volume.
+
+This endpoint is intentionally a similarity search, not a replacement for
+structured filtering. Sentence embeddings do not guarantee exact comparison of
+customer IDs, dates, or numeric amounts. Questions requiring exact predicates,
+such as a specific customer, date range, or highest amount, belong on
+`POST /orders/ask`. A larger production system could combine vector retrieval
+with metadata filters, but that hybrid behavior is outside the required
+cosine-nearest-neighbour contract implemented here.

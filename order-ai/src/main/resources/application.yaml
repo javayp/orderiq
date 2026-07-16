@@ -2,10 +2,19 @@ spring:
   application:
     name: orderiq
   ai:
+    model:
+      embedding: transformers
     openai:
       api-key: ${OPENAI_API_KEY}
       chat:
         model: ${OPENAI_MODEL:gpt-5.4-nano}
+    embedding:
+      transformer:
+        cache:
+          directory: ${ORDERIQ_EMBEDDING_CACHE:./data/embedding-model-cache}
+        tokenizer:
+          options:
+            padding: true
   config:
     import: classpath:order-vocabulary.yaml
   sql:
@@ -17,3 +26,10 @@ spring:
 orderiq:
   database:
     path: ${ORDERIQ_DB_PATH:./data/orders.db}
+  semantic:
+    enabled: true
+    batch-size: 128
+    max-top-k: 50
+    max-query-length: 500
+    minimum-score: 0.20
+    refresh-interval-ms: 5000

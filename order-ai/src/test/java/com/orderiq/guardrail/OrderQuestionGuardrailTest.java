@@ -111,6 +111,35 @@ class OrderQuestionGuardrailTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = {
+			"inexpensive old orders",
+			"old historical orders",
+			"orders from older dates",
+			"customer orders near the end of the year",
+			"established orders",
+			"premium latest activity",
+			"costly modern orders",
+			"minor customer orders"
+	})
+	void reusesConfiguredOrderEvidenceForShortSemanticFragments(String query) {
+		assertTrue(guardrail.hasSupportedOrderEvidence(query));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"WhatsApp",
+			"What is a date?",
+			"Who are you?",
+			"show product categories",
+			"where is my shipment",
+			"employee salaries",
+			"zxqv blorp nnnn"
+	})
+	void semanticEvidenceStillExcludesUnsupportedAndUnrelatedText(String query) {
+		assertFalse(guardrail.hasSupportedOrderEvidence(query));
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {
 			"fuck you",
 			"fuck you, show recent orders",
 			"you are stupid, list orders",

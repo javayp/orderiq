@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orderiq-config
+data:
+  SERVER_PORT: "8000"
+  ORDERIQ_DB_PATH: /data/orders.db
+  ORDERIQ_EMBEDDING_CACHE: /data/embedding-model-cache
+  OPENAI_MODEL: gpt-5.4-nano

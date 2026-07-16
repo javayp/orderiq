@@ -8,9 +8,13 @@ import java.util.List;
 
 public interface OrderQueryRepository {
 
+	List<Order> findAll();
+
 	List<Order> findByCustomerId(String customerId);
 
 	List<Order> findBetween(LocalDate fromInclusive, LocalDate toInclusive);
 
 	OrderStatistics statistics();
+
+	long datasetRevision();
 }

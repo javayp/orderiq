@@ -40,3 +40,6 @@ out/
 *.db
 *.db-shm
 *.db-wal
+/data/embedding-model-cache/
+/k8s/secret.yaml
+/.env.local

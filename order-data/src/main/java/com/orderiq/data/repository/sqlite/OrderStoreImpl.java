@@ -18,6 +18,11 @@ public class OrderStoreImpl implements OrderStore {
 			INSERT INTO orders (order_id, customer_id, order_date, amount_usd)
 			VALUES (?, ?, ?, ?)
 			""";
+	private static final String ADVANCE_REVISION_SQL = """
+			UPDATE order_dataset_state
+			SET revision = revision + 1
+			WHERE state_id = 1
+			""";
 
 	private final JdbcTemplate jdbcTemplate;
 
@@ -31,5 +36,6 @@ public class OrderStoreImpl implements OrderStore {
 			statement.setString(3, order.orderDate().toString());
 			statement.setBigDecimal(4, order.amountUsd());
 		});
+		jdbcTemplate.update(ADVANCE_REVISION_SQL);
 	}
 }

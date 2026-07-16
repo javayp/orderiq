@@ -42,6 +42,10 @@ class OrderDataConfigurationTest {
 	}
 
 	private static final class EmptyOrderQueryRepository implements OrderQueryRepository {
+		@Override
+		public List<Order> findAll() {
+			return List.of();
+		}
 
 		@Override
 		public List<Order> findByCustomerId(String customerId) {
@@ -56,6 +60,11 @@ class OrderDataConfigurationTest {
 		@Override
 		public OrderStatistics statistics() {
 			return new OrderStatistics(BigDecimal.ZERO, BigDecimal.ZERO, Map.of());
+		}
+
+		@Override
+		public long datasetRevision() {
+			return 0;
 		}
 	}
 }

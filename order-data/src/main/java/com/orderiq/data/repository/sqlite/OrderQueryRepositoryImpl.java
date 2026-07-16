@@ -42,6 +42,15 @@ public class OrderQueryRepositoryImpl implements OrderQueryRepository {
 	private final JdbcTemplate jdbcTemplate;
 
 	@Override
+	public List<Order> findAll() {
+		return jdbcTemplate.query("""
+				SELECT %s
+				FROM orders
+				ORDER BY order_id ASC
+				""".formatted(SELECT_COLUMNS), ORDER_ROW_MAPPER);
+	}
+
+	@Override
 	public List<Order> findByCustomerId(String customerId) {
 		return jdbcTemplate.query("""
 				SELECT %s
@@ -69,6 +78,14 @@ public class OrderQueryRepositoryImpl implements OrderQueryRepository {
 		BigDecimal averageOrderValue = calculateAverageOrderValue(revenue);
 
 		return new OrderStatistics(revenue.totalRevenue(), averageOrderValue, ordersPerDay);
+	}
+
+	@Override
+	public long datasetRevision() {
+		Long revision = jdbcTemplate.queryForObject(
+				"SELECT revision FROM order_dataset_state WHERE state_id = 1",
+				Long.class);
+		return Objects.requireNonNull(revision, "Dataset revision must not be null");
 	}
 
 	private RevenueAggregate queryRevenueAggregate() {

@@ -1,7 +1,9 @@
 package com.orderiq.api;
 
 import com.orderiq.client.OrderQueryModelClient;
+import com.orderiq.data.model.Order;
 import com.orderiq.planning.OrderQueryPlan;
+import com.orderiq.semantic.InMemoryOrderSemanticIndex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -9,18 +11,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.nio.file.Path;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 
 import static com.orderiq.planning.OrderQueryPlan.Status.QUERY;
 import static com.orderiq.planning.OrderQueryPlan.Status.REJECTED;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,6 +61,12 @@ class OrderApiIntegrationTest {
 	@MockitoBean
 	OrderQueryModelClient orderQueryModelClient;
 
+	@MockitoBean
+	EmbeddingModel embeddingModel;
+
+	@Autowired
+	InMemoryOrderSemanticIndex semanticIndex;
+
 	private LocalDate today;
 
 	@BeforeEach
@@ -65,6 +77,18 @@ class OrderApiIntegrationTest {
 		insert("RECENT-YESTERDAY", "C001", today.minusDays(1), "20.00");
 		insert("OLD", "C002", today.minusDays(2), "5.00");
 		insert("FUTURE", "C003", today.plusDays(1), "7.00");
+		semanticIndex.replace(
+				List.of(
+						order("RECENT-TODAY", "C001", today, "10.00"),
+						order("RECENT-YESTERDAY", "C001", today.minusDays(1), "20.00"),
+						order("OLD", "C002", today.minusDays(2), "5.00"),
+						order("FUTURE", "C003", today.plusDays(1), "7.00")),
+				List.of(
+						new float[]{1, 0},
+						new float[]{0.8f, 0.2f},
+						new float[]{0, 1},
+						new float[]{-1, 0}));
+		when(embeddingModel.embed(anyString())).thenReturn(new float[]{1, 0});
 		when(orderQueryModelClient.generate(any())).thenReturn(new OrderQueryPlan(
 				QUERY,
 				"SELECT COUNT(*) AS total_orders FROM orders",
@@ -115,6 +139,63 @@ class OrderApiIntegrationTest {
 				.andExpect(status().isOk())
 				.andExpect(content().contentTypeCompatibleWith("text/plain"))
 				.andExpect(content().string("ok"));
+	}
+
+	@Test
+	void reportsReadinessAfterTheSemanticIndexIsAvailable() throws Exception {
+		mockMvc.perform(get("/readyz"))
+				.andExpect(status().isOk())
+				.andExpect(content().contentTypeCompatibleWith("text/plain"))
+				.andExpect(content().string("ready"));
+	}
+
+	@Test
+	void returnsTheTopSemanticOrderMatches() throws Exception {
+		mockMvc.perform(get("/orders/semantic_search")
+					.queryParam("q", "recent customer orders")
+					.queryParam("top_k", "2"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].order_id").value("RECENT-TODAY"))
+				.andExpect(jsonPath("$[0].score").value(1.0))
+				.andExpect(jsonPath("$[1].order_id").value("RECENT-YESTERDAY"))
+				.andExpect(jsonPath("$.length()").value(2));
+	}
+
+	@Test
+	void rejectsInvalidSemanticSearchParameters() throws Exception {
+		mockMvc.perform(get("/orders/semantic_search")
+					.queryParam("q", " ")
+					.queryParam("top_k", "5"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.detail").value("q must not be blank"));
+
+		mockMvc.perform(get("/orders/semantic_search")
+					.queryParam("q", "recent orders")
+					.queryParam("top_k", "0"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.detail").value("top_k must be between 1 and 50"));
+
+		mockMvc.perform(get("/orders/semantic_search").queryParam("top_k", "5"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.detail").value("q is required"));
+
+		mockMvc.perform(get("/orders/semantic_search")
+					.queryParam("q", "orders")
+					.queryParam("top_k", "abc"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.detail").value("top_k must be an integer"));
+	}
+
+	@Test
+	void rejectsOutOfDomainTextBeforeSemanticEmbedding() throws Exception {
+		mockMvc.perform(get("/orders/semantic_search")
+					.queryParam("q", "tell me a joke")
+					.queryParam("top_k", "2"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.title").value("Order question rejected"))
+				.andExpect(jsonPath("$.decision").value("OUT_OF_DOMAIN"));
+
+		verify(embeddingModel, never()).embed("tell me a joke");
 	}
 
 	@Test
@@ -218,5 +299,9 @@ class OrderApiIntegrationTest {
 				INSERT INTO orders (order_id, customer_id, order_date, amount_usd)
 				VALUES (?, ?, ?, ?)
 				""", orderId, customerId, orderDate.toString(), amountUsd);
+	}
+
+	private static Order order(String orderId, String customerId, LocalDate orderDate, String amountUsd) {
+		return new Order(orderId, customerId, orderDate, new BigDecimal(amountUsd));
 	}
 }

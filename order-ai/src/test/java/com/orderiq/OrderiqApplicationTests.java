@@ -16,6 +16,8 @@ class OrderiqApplicationTests {
 	@DynamicPropertySource
 	static void databasePath(DynamicPropertyRegistry registry) {
 		registry.add("orderiq.database.path", () -> tempDirectory.resolve("orders.db").toString());
+		registry.add("orderiq.semantic.enabled", () -> "false");
+		registry.add("spring.ai.model.embedding", () -> "none");
 	}
 
 	@Test
